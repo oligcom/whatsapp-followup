@@ -1,0 +1,15 @@
+{
+  "name": "whatsapp-followup",
+  "version": "1.0.0",
+  "description": "Gerador de mensagens de follow-up para WhatsApp - lojas de varejo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1"
+  }
+}

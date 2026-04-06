@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp Follow-up Generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #25D366;
+      --green-dark: #128C7E;
+      --green-light: #DCF8C6;
+      --bg: #f0f2f5;
+      --white: #ffffff;
+      --gray: #667781;
+      --gray-light: #e9edef;
+      --text: #111b21;
+      --border: #d1d7db;
+      --shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--green-dark);
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    header .logo {
+      font-size: 28px;
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    header p {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 800px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-light);
+      font-weight: 600;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green-dark);
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--green);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .qty-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .qty-control input[type="range"] {
+      flex: 1;
+      padding: 0;
+      border: none;
+      accent-color: var(--green);
+    }
+
+    .qty-badge {
+      background: var(--green);
+      color: white;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .btn-gerar {
+      width: 100%;
+      padding: 14px;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    .btn-gerar:hover:not(:disabled) {
+      background: var(--green-dark);
+    }
+
+    .btn-gerar:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn-gerar:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .results-area {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--gray);
+    }
+
+    .empty-state .icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state p {
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .messages-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    .msg-card {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .msg-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .msg-card-header {
+      background: var(--gray-light);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .msg-badge {
+      background: var(--green-dark);
+      color: white;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .msg-titulo {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray);
+      flex: 1;
+      margin: 0 10px;
+    }
+
+    .btn-copy {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--gray);
+      transition: all 0.2s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .btn-copy:hover {
+      background: var(--green-light);
+      border-color: var(--green);
+      color: var(--green-dark);
+    }
+
+    .btn-copy.copiado {
+      background: var(--green-light);
+      border-color: var(--green);
+      color: var(--green-dark);
+    }
+
+    .msg-bubble-wrap {
+      padding: 14px;
+      background: #e5ddd5;
+    }
+
+    .msg-bubble {
+      background: var(--green-light);
+      border-radius: 8px 8px 8px 2px;
+      padding: 10px 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-width: 85%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .msg-bubble::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: 0;
+      border: 6px solid transparent;
+      border-right-color: var(--green-light);
+      border-top: none;
+    }
+
+    .error-msg {
+      background: #fff3f3;
+      border: 1.5px solid #ffcccc;
+      border-radius: 10px;
+      padding: 16px;
+      margin: 20px;
+      color: #c0392b;
+      font-size: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .uso-info {
+      padding: 10px 20px;
+      border-top: 1px solid var(--gray-light);
+      font-size: 12px;
+      color: var(--gray);
+      text-align: right;
+    }
+
+    .required-star {
+      color: #e74c3c;
+      margin-left: 2px;
+    }
+
+    .tip {
+      font-size: 12px;
+      color: var(--gray);
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">💬</span>
+  <div>
+    <h1>WhatsApp Follow-up Generator</h1>
+    <p>Gere mensagens personalizadas com IA para sua loja</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Formulário -->
+  <div class="card">
+    <div class="card-header">
+      🏪 Dados para geração
+    </div>
+    <div class="card-body">
+      <form id="form">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome da Loja <span class="required-star">*</span></label>
+            <input type="text" id="nomeLoja" placeholder="Ex: Moda Bella" required />
+          </div>
+          <div class="form-group">
+            <label>Segmento</label>
+            <input type="text" id="segmento" placeholder="Ex: Moda feminina" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Nome do Cliente <span class="required-star">*</span></label>
+          <input type="text" id="nomeCliente" placeholder="Ex: Ana Silva" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Produto / Serviço</label>
+            <input type="text" id="produto" placeholder="Ex: Vestido floral" />
+          </div>
+          <div class="form-group">
+            <label>Valor (R$)</label>
+            <input type="text" id="valor" placeholder="Ex: 159,90" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Mensagem <span class="required-star">*</span></label>
+          <select id="tipoMensagem" required>
+            <option value="">Carregando...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Tom de Voz <span class="required-star">*</span></label>
+          <select id="tomVoz" required>
+            <option value="">Carregando...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Contexto adicional</label>
+          <textarea id="contextoExtra" placeholder="Ex: Cliente não responde há 30 dias. Última compra foi um tênis de corrida..."></textarea>
+          <p class="tip">Quanto mais contexto, mensagens mais personalizadas</p>
+        </div>
+
+        <div class="form-group">
+          <label>Variações a gerar</label>
+          <div class="qty-control">
+            <input type="range" id="quantidade" min="1" max="5" value="3" />
+            <div class="qty-badge" id="qtyDisplay">3</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-gerar" id="btnGerar">
+          <div class="spinner" id="spinner"></div>
+          <span id="btnTexto">✨ Gerar Mensagens</span>
+        </button>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Resultados -->
+  <div class="card results-area">
+    <div class="card-header">
+      📱 Mensagens Geradas
+    </div>
+
+    <div id="emptyState" class="empty-state">
+      <div class="icon">💬</div>
+      <p>Preencha os dados ao lado e clique em<br><strong>"Gerar Mensagens"</strong> para começar</p>
+    </div>
+
+    <div id="resultados" style="display:none;">
+      <div id="listaMsg" class="messages-list"></div>
+      <div id="usoInfo" class="uso-info"></div>
+    </div>
+
+    <div id="erroMsg" style="display:none;"></div>
+  </div>
+
+</div>
+
+<script>
+  // Carrega opções do servidor
+  async function carregarOpcoes() {
+    try {
+      const res = await fetch('/api/opcoes');
+      const data = await res.json();
+
+      const selTipo = document.getElementById('tipoMensagem');
+      selTipo.innerHTML = '<option value="">Selecione o tipo...</option>' +
+        data.tiposMensagem.map(o => `<option value="${o.valor}">${o.label}</option>`).join('');
+
+      const selTom = document.getElementById('tomVoz');
+      selTom.innerHTML = '<option value="">Selecione o tom...</option>' +
+        data.tomsVoz.map(o => `<option value="${o.valor}">${o.label}</option>`).join('');
+    } catch (e) {
+      console.error('Erro ao carregar opções:', e);
+    }
+  }
+
+  carregarOpcoes();
+
+  // Atualiza display da quantidade
+  const rangeQtd = document.getElementById('quantidade');
+  const qtyDisplay = document.getElementById('qtyDisplay');
+  rangeQtd.addEventListener('input', () => {
+    qtyDisplay.textContent = rangeQtd.value;
+  });
+
+  // Submit do formulário
+  document.getElementById('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = document.getElementById('btnGerar');
+    const spinner = document.getElementById('spinner');
+    const btnTexto = document.getElementById('btnTexto');
+
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    btnTexto.textContent = 'Gerando...';
+
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('resultados').style.display = 'none';
+    document.getElementById('erroMsg').style.display = 'none';
+
+    const payload = {
+      nomeLoja: document.getElementById('nomeLoja').value.trim(),
+      segmento: document.getElementById('segmento').value.trim(),
+      nomeCliente: document.getElementById('nomeCliente').value.trim(),
+      produto: document.getElementById('produto').value.trim(),
+      valor: document.getElementById('valor').value.trim(),
+      tipoMensagem: document.getElementById('tipoMensagem').value,
+      tomVoz: document.getElementById('tomVoz').value,
+      contextoExtra: document.getElementById('contextoExtra').value.trim(),
+      quantidade: parseInt(rangeQtd.value),
+    };
+
+    try {
+      const res = await fetch('/api/gerar-mensagens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.sucesso) {
+        throw new Error(data.error || 'Erro desconhecido');
+      }
+
+      renderMensagens(data.mensagens, data.uso);
+
+    } catch (err) {
+      document.getElementById('erroMsg').style.display = 'block';
+      document.getElementById('erroMsg').innerHTML = `
+        <div class="error-msg">
+          <span>⚠️</span>
+          <div>
+            <strong>Erro ao gerar mensagens</strong><br>
+            ${err.message}
+          </div>
+        </div>`;
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnTexto.textContent = '✨ Gerar Mensagens';
+    }
+  });
+
+  function renderMensagens(mensagens, uso) {
+    const lista = document.getElementById('listaMsg');
+    lista.innerHTML = mensagens.map((msg, i) => `
+      <div class="msg-card">
+        <div class="msg-card-header">
+          <span class="msg-badge">Opção ${msg.variacao || i + 1}</span>
+          <span class="msg-titulo">${escapeHtml(msg.titulo || '')}</span>
+          <button class="btn-copy" onclick="copiarMensagem(this, ${i})" data-texto="${escapeAttr(msg.texto)}">
+            📋 Copiar
+          </button>
+        </div>
+        <div class="msg-bubble-wrap">
+          <div class="msg-bubble">${escapeHtml(msg.texto)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    if (uso) {
+      document.getElementById('usoInfo').textContent =
+        `Tokens usados: ${uso.inputTokens} entrada + ${uso.outputTokens} saída`;
+    }
+
+    document.getElementById('resultados').style.display = 'block';
+  }
+
+  function copiarMensagem(btn, idx) {
+    const texto = btn.dataset.texto;
+    navigator.clipboard.writeText(texto).then(() => {
+      btn.classList.add('copiado');
+      btn.textContent = '✅ Copiado!';
+      setTimeout(() => {
+        btn.classList.remove('copiado');
+        btn.innerHTML = '📋 Copiar';
+      }, 2000);
+    }).catch(() => {
+      // Fallback para browsers sem clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.textContent = '✅ Copiado!';
+      setTimeout(() => { btn.innerHTML = '📋 Copiar'; }, 2000);
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/\n/g, '<br>');
+  }
+
+  function escapeAttr(str) {
+    return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+</script>
+
+</body>
+</html>
